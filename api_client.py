@@ -27,16 +27,48 @@ class APIClient:
         self.telegram_id = telegram_id
 
     async def authenticate(self) -> str:
-        """Получение JWT-токена"""
-        if not self.telegram_id:
-            raise Exception("telegram_id is required for authentication. Call set_telegram_id() first.")
+    """Получение JWT-токена"""
+    # Убедимся, что telegram_id установлен
+    if not self.telegram_id:
+        raise Exception("telegram_id is required for authentication. Call set_telegram_id() first.")
+    
+    url = f"{self.base_url}/bot_api.php"
+    data = {
+        "api_key": self.api_key,
+        "action": "auth",
+        "telegram_id": self.telegram_id  # <-- ТЕПЕРЬ ПЕРЕДАЕТСЯ!
+    }
+    
+    session = await self._get_session()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
+        "X-API-Key": self.api_key,
+        "Content-Type": "application/json"
+    }
+    
+    async with session.post(url, json=data, headers=headers) as resp:
+        text = await resp.text()
+        logger.info(f"Auth response: {text}")
         
-        url = f"{self.base_url}/bot_api.php"
-        data = {
-            "api_key": self.api_key,
-            "action": "auth",
-            "telegram_id": self.telegram_id
-        }
+        if not text or text.strip() == '':
+            raise Exception("Empty response from server")
+        
+        try:
+            result = json.loads(text)
+        except json.JSONDecodeError as e:
+            raise Exception(f"Invalid JSON: {text[:200]}")
+        
+        if result.get('error'):
+            raise Exception(f"API error: {result['error']}")
+        
+        self.access_token = result.get('access_token')
+        if not self.access_token:
+            raise Exception(f"No access_token in response: {result}")
+        
+        expires_in = result.get('expires_in', 3600)
+        self.token_expires = datetime.now() + timedelta(seconds=expires_in - 60)
+        return self.access_token
         
         session = await self._get_session()
         headers = {
