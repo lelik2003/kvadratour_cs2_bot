@@ -3,12 +3,12 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from main import api
+from api_client import APIClient  # <-- ТОЛЬКО ЭТОТ ИМПОРТ!
 
 router = Router()
+api = APIClient()  # <-- СОЗДАЕМ ЭКЗЕМПЛЯР ЗДЕСЬ
 
 class MatchScore(StatesGroup):
-    """Состояния для ввода счета"""
     waiting_for_match_id = State()
     waiting_for_score = State()
 
@@ -88,7 +88,6 @@ async def process_score(message: types.Message, state: FSMContext):
         await state.clear()
         return
     
-    # Парсим счет
     try:
         parts = message.text.split(':')
         if len(parts) != 2:
@@ -101,7 +100,6 @@ async def process_score(message: types.Message, state: FSMContext):
         )
         return
     
-    # Обновляем счет
     success = await api.set_match_score(match_id, score1, score2)
     
     if success:
