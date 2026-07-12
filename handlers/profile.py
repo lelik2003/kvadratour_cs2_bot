@@ -1,10 +1,10 @@
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from api_client import APIClient  # <-- Импортируем api_client
+from api_client import APIClient  # <-- ТОЛЬКО ЭТОТ ИМПОРТ!
 
 router = Router()
-api = APIClient()
+api = APIClient()  # <-- СОЗДАЕМ ЭКЗЕМПЛЯР ЗДЕСЬ
 
 @router.message(Command("profile"))
 async def cmd_profile(message: types.Message):
@@ -24,7 +24,6 @@ async def cmd_profile(message: types.Message):
         await message.answer(text, reply_markup=keyboard)
         return
     
-    # Формируем профиль
     stats = site_user.get('stats', {})
     nickname = site_user.get('nickname', 'Игрок')
     elo = stats.get('elo', 1000)
@@ -63,7 +62,6 @@ async def callback_profile(callback: types.CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "link")
 async def callback_link(callback: types.CallbackQuery):
-    """Начать процесс привязки аккаунта"""
     await callback.answer()
     await callback.message.answer(
         "🔗 Привязка аккаунта\n\n"
