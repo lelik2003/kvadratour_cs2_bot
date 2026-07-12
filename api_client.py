@@ -54,13 +54,11 @@ class APIClient:
             try:
                 async with session.request(method, url, json=data, headers=headers) as resp:
                     if resp.status == 401:
-                        # Токен истек - обновляем
                         await self.authenticate()
                         headers["Authorization"] = f"Bearer {self.access_token}"
                         continue
                     
                     if resp.status == 429:
-                        # Rate limit - ждем
                         retry_after = int(resp.headers.get('Retry-After', 5))
                         await asyncio.sleep(retry_after)
                         continue
@@ -78,10 +76,6 @@ class APIClient:
         
         return {}
 
-    # ============================================
-    # МЕТОДЫ ДЛЯ БОТА
-    # ============================================
-
     async def get_user_by_telegram(self, telegram_id: int) -> Optional[Dict]:
         """Получить пользователя по Telegram ID"""
         result = await self._request('GET', f'/user?telegram_id={telegram_id}')
@@ -96,46 +90,10 @@ class APIClient:
         result = await self._request('POST', '/link', data)
         return result.get('success', False)
 
-    async def unlink_user(self, user_id: int) -> bool:
-        """Отвязать Telegram от аккаунта"""
-        data = {'user_id': user_id}
-        result = await self._request('POST', '/unlink', data)
-        return result.get('success', False)
-
     async def get_active_tournaments(self) -> List[Dict]:
         """Получить активные турниры"""
         result = await self._request('GET', '/tournaments?status=active')
         return result.get('data', [])
-
-    async def get_tournament_matches(self, tournament_id: int) -> List[Dict]:
-        """Получить матчи турнира"""
-        result = await self._request('GET', f'/tournaments/{tournament_id}/matches')
-        return result.get('data', [])
-
-    async def get_match(self, match_id: int) -> Optional[Dict]:
-        """Получить информацию о матче"""
-        result = await self._request('GET', f'/matches/{match_id}')
-        return result.get('data')
-
-    async def set_match_score(self, match_id: int, team1_score: int, team2_score: int) -> bool:
-        """Установить счет матча"""
-        data = {
-            'team1_score': team1_score,
-            'team2_score': team2_score,
-            'status': 'finished'
-        }
-        result = await self._request('POST', f'/matches/{match_id}/score', data)
-        return result.get('success', False)
-
-    async def get_team_info(self, team_id: int) -> Optional[Dict]:
-        """Получить информацию о команде"""
-        result = await self._request('GET', f'/teams/{team_id}')
-        return result.get('data')
-
-    async def get_user_profile(self, user_id: int) -> Optional[Dict]:
-        """Получить профиль пользователя"""
-        result = await self._request('GET', f'/user?id={user_id}')
-        return result.get('user')
 
     async def close(self):
         if self._session and not self._session.closed:
