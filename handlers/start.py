@@ -1,20 +1,16 @@
 from aiogram import Router, types
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from api_client import APIClient  # <-- Импортируем api_client
+from api_client import APIClient
 
 router = Router()
-
-# Создаем экземпляр клиента (или получаем глобальный)
 api = APIClient()
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    """Обработчик команды /start"""
     user_id = message.from_user.id
     username = message.from_user.username or 'Игрок'
     
-    # Проверяем привязку
     site_user = await api.get_user_by_telegram(user_id)
     
     text = f"""
