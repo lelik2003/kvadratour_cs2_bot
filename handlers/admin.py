@@ -1,9 +1,8 @@
 from aiogram import Router, types
 from aiogram.filters import Command
 from config import Config
-from main import api
 
-router = Router()
+router = Router()  # <-- СОЗДАЕМ РОУТЕР
 
 @router.message(Command("admin"))
 async def cmd_admin(message: types.Message):
