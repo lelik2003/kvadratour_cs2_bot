@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import Config
-from api_client import APIClient  # <-- Импортируем из api_client, а не из main
+from api_client import APIClient
 from handlers import start, profile, tournaments, matches, admin
 
 # Настройка логирования
@@ -28,7 +28,7 @@ bot = Bot(
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
-# Создаем клиент API (ОДИН раз здесь)
+# Создаем клиент API
 api_client = APIClient()
 
 # Регистрируем обработчики
@@ -39,17 +39,45 @@ dp.include_router(matches.router)
 dp.include_router(admin.router)
 
 async def on_startup():
+    """Действия при запуске бота"""
     logger.info("🚀 Бот запускается...")
-    await api_client.authenticate()
-    logger.info("✅ Авторизация на API успешна")
+    
+    try:
+        # Получаем ID бота для авторизации
+        bot_info = await bot.get_me()
+        bot_telegram_id = str(bot_info.id)
+        logger.info(f"🤖 Bot ID: {bot_telegram_id}")
+        
+        # Устанавливаем Telegram ID для авторизации
+        api_client.set_telegram_id(bot_telegram_id)
+        
+        # Авторизуемся на API
+        await api_client.authenticate()
+        logger.info("✅ Авторизация на API успешна")
+        
+        # Получаем информацию о боте как пользователе
+        user = await api_client.get_user()
+        if user:
+            logger.info(f"👤 Бот авторизован как: {user.get('nickname')} (ID: {user.get('id')})")
+        else:
+            logger.warning("⚠️ Бот не привязан к аккаунту на сайте")
+            logger.info("💡 Для привязки используйте команду /link в боте")
+            
+    except Exception as e:
+        logger.error(f"❌ Ошибка при запуске: {e}")
+        # Продолжаем запуск даже если авторизация не удалась
 
 async def on_shutdown():
+    """Действия при остановке бота"""
     logger.info("🛑 Бот останавливается...")
     await api_client.close()
     await bot.session.close()
+    logger.info("✅ Бот остановлен")
 
 async def main():
+    """Главная функция"""
     try:
+        # Проверка конфигурации
         Config.validate()
         logger.info("✅ Конфигурация проверена")
         
