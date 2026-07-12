@@ -22,7 +22,7 @@ class APIClient:
 
     async def authenticate(self) -> str:
         """Получение JWT-токена"""
-        url = f"{self.base_url}/auth"
+        url = f"{self.base_url}/auth.php"
         data = {"api_key": self.api_key}
         
         session = await self._get_session()
