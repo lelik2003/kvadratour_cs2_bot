@@ -1,9 +1,10 @@
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from main import api
+from api_client import APIClient  # <-- ТОЛЬКО ЭТОТ ИМПОРТ!
 
 router = Router()
+api = APIClient()  # <-- СОЗДАЕМ ЭКЗЕМПЛЯР ЗДЕСЬ
 
 @router.message(Command("tournaments"))
 async def cmd_tournaments(message: types.Message):
